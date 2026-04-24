@@ -2,6 +2,7 @@ package tech_ops.project.controller;
 
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import tech_ops.project.dto.EquipmentDto;
@@ -79,5 +80,18 @@ public class EquipmentController {
     @PostMapping("/detach")
     public void detachFromParent(@RequestParam("child_id") Long childId) {
         service.detachFromParent(childId);
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
+    @PostMapping("/batch")
+    public ResponseEntity<?> createBatch(@RequestBody List<EquipmentDto> batch) {
+        service.saveBatch(batch);
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
+    @GetMapping("/next-numbers")
+    public List<String> getNextNumbers(@RequestParam int count) {
+        return service.getNextAvailableNumbers(count);
     }
 }

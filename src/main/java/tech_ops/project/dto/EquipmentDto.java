@@ -1,5 +1,6 @@
 package tech_ops.project.dto;
 
+import jakarta.validation.constraints.*;
 import tech_ops.project.entity.Equipment;
 import tech_ops.project.entity.EquipmentType;
 
@@ -8,18 +9,30 @@ public class EquipmentDto {
 
     private EquipmentDto parent;
 
+    @NotNull(message = "Необходимо указать тип оборудования")
     private EquipmentType type;
 
+    @Size(max = 255, message = "Название не должно превышать 255 символов")
     private String name;
 
+    @Pattern(
+            regexp = "^ИТ\\d{5}$",
+            message = "Неверный формат номера. Ожидается 'ИТ' и 5 цифр (например, ИТ00123)"
+    )
     private String inventoryNumber;
 
+    @Size(max = 30, message = "Серийный номер не может превышать 30 символов")
     private String serialNumber;
 
     private UserDto employee;
 
+    @NotBlank(message = "Местоположение обязательно для заполнения")
+    @Size(max = 255, message = "Местоположение не должно превышать 255 символов")
     private String location;
 
+    @NotNull(message = "Категория обязательна")
+    @Min(value = 1, message = "Минимальная категория — 1")
+    @Max(value = 5, message = "Максимальная категория — 5")
     private Integer category;
 
     public Long getId() {

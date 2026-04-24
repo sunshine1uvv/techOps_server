@@ -3,18 +3,19 @@ package tech_ops.project.service;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import tech_ops.project.dto.EquipmentDto;
 import tech_ops.project.entity.Equipment;
 import tech_ops.project.entity.EquipmentType;
 import tech_ops.project.entity.User;
+import tech_ops.project.exceptions.InventoryConflictException;
 import tech_ops.project.repository.EquipmentRepository;
 import tech_ops.project.repository.EquipmentTypeRepository;
 import tech_ops.project.repository.UserRepository;
 import tech_ops.project.synchronization.WebSyncService;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -94,15 +95,27 @@ public class EquipmentService {
     public EquipmentDto save(EquipmentDto equipmentDto) {
         boolean isNew = (equipmentDto.getId() == null);
         Equipment equipment = toEntity(equipmentDto);
-        if (equipment.getParent() != null) {
-            throw new RuntimeException("Нельзя менять инвентарный номер у дочерних элементов");
+        Equipment existing = null;
+
+        if (!isNew) {
+            existing = equipmentRepository.findById(equipment.getId()).orElseThrow();
+
+            if (existing.getParent() != null) {
+                boolean inventoryChanged = !Objects.equals(existing.getInventoryNumber(), equipment.getInventoryNumber());
+                if (inventoryChanged) {
+                    throw new RuntimeException("Нельзя менять инвентарный номер у дочерних элементов");
+                }
+            }
         }
+
+        validateInventoryNumberUniqueness(equipment);
+
         List<EquipmentDto> affectedItems = new ArrayList<>();
 
         if (!isNew) {
-            Equipment oldState = equipmentRepository.findById(equipment.getId()).orElseThrow();
-            boolean inventoryChanged = (oldState.getParent() == null) &&
-                    !Objects.equals(oldState.getInventoryNumber(), equipment.getInventoryNumber());
+            boolean inventoryChanged = (existing.getParent() == null) &&
+                    !Objects.equals(existing.getInventoryNumber(), equipment.getInventoryNumber());
+
             if (inventoryChanged) {
                 List<Equipment> children = equipmentRepository.findByParentId(equipment.getId());
                 for (Equipment child : children) {
@@ -121,6 +134,38 @@ public class EquipmentService {
 
         return toDto(saved);
     }
+
+    private void validateInventoryNumberUniqueness(Equipment equipment) {
+        String invNum = equipment.getInventoryNumber();
+        if (invNum == null || invNum.isBlank()) {
+            return;
+        }
+
+        Optional<Equipment> existingRootOpt = equipmentRepository
+                .findByInventoryNumberAndParentIsNull(invNum);
+
+        if (existingRootOpt.isEmpty()) {
+            return;
+        }
+
+        Equipment existingRoot = existingRootOpt.get();
+
+        if (equipment.getId() != null && equipment.getId().equals(existingRoot.getId())) {
+            return;
+        }
+
+        if (equipment.getParent() != null
+                && equipment.getParent().getId() != null
+                && equipment.getParent().getId().equals(existingRoot.getId())) {
+            return;
+        }
+
+        throw new InventoryConflictException(
+                String.format("Инвентарный номер '%s' уже существует",
+                        invNum)
+        );
+    }
+
 
     @Transactional
     public void deleteById(Long id) {
@@ -182,5 +227,42 @@ public class EquipmentService {
         child.setInventoryNumber(null);
         equipmentRepository.save(child);
         syncService.sendEquipmentSync("UPDATE", List.of(toDto(child)));
+    }
+
+    @Transactional
+    public void saveBatch(List<EquipmentDto> dtos) {
+        Set<String> invs = dtos.stream().map(EquipmentDto::getInventoryNumber).collect(Collectors.toSet());
+        Set<String> serials = dtos.stream().map(EquipmentDto::getSerialNumber).collect(Collectors.toSet());
+
+        if (equipmentRepository.existsByInventoryNumberIn(invs) || equipmentRepository.existsBySerialNumberIn(serials)) {
+            throw new RuntimeException("Конфликт данных: некоторые номера уже были заняты.");
+        }
+
+        List<Equipment> entities = dtos.stream().map(this::toEntity).collect(Collectors.toList());
+        List<Equipment> saved = equipmentRepository.saveAll(entities);
+
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                List<EquipmentDto> allDtos = toDtoList(saved);
+                int chunkSize = 10;
+                for (int i = 0; i < allDtos.size(); i += chunkSize) {
+                    int end = Math.min(i + chunkSize, allDtos.size());
+                    List<EquipmentDto> chunk = allDtos.subList(i, end);
+                    syncService.sendEquipmentSync("CREATE", chunk);
+                }
+            }
+        });
+    }
+
+    public List<String> getNextAvailableNumbers(int count) {
+        String last = equipmentRepository.findLastInventoryNumber().orElse("ИТ00000");
+        int lastNum = Integer.parseInt(last.substring(2));
+
+        List<String> nextNumbers = new ArrayList<>();
+        for (int i = 1; i <= count; i++) {
+            nextNumbers.add(String.format("ИТ%05d", lastNum + i));
+        }
+        return nextNumbers;
     }
 }

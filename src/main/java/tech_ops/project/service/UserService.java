@@ -2,9 +2,7 @@ package tech_ops.project.service;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import tech_ops.project.dto.RequestResponseDto;
 import tech_ops.project.dto.UserDto;
 import tech_ops.project.entity.RegistrationRequest;
 import tech_ops.project.entity.User;
