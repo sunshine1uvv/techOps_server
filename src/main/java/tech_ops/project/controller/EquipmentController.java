@@ -34,12 +34,6 @@ public class EquipmentController {
     }
 
     @PreAuthorize("isAuthenticated()")
-    @GetMapping("/user/{userId}")
-    public List<EquipmentDto> getEquipmentByUserId(@PathVariable Long userId) {
-        return service.findByUserId(userId);
-    }
-
-    @PreAuthorize("isAuthenticated()")
     @GetMapping("/bundle/{id}")
     public List<EquipmentDto> getBundle(@PathVariable Long id) {
         return service.findBundle(id);
@@ -61,12 +55,6 @@ public class EquipmentController {
     @DeleteMapping("/{id}")
     public void deleteById(@PathVariable Long id) {
         service.deleteById(id);
-    }
-
-    @PreAuthorize("isAuthenticated()")
-    @GetMapping("/roots")
-    public List<EquipmentDto> getRootEquipment() {
-        return service.findEquipmentByParentIdIsNullAndInventoryNumberIsNotNull();
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")

@@ -99,7 +99,6 @@ public class EquipmentService {
 
         if (!isNew) {
             existing = equipmentRepository.findById(equipment.getId()).orElseThrow();
-
             if (existing.getParent() != null) {
                 boolean inventoryChanged = !Objects.equals(existing.getInventoryNumber(), equipment.getInventoryNumber());
                 if (inventoryChanged) {
@@ -109,13 +108,11 @@ public class EquipmentService {
         }
 
         validateInventoryNumberUniqueness(equipment);
-
         List<EquipmentDto> affectedItems = new ArrayList<>();
 
         if (!isNew) {
             boolean inventoryChanged = (existing.getParent() == null) &&
                     !Objects.equals(existing.getInventoryNumber(), equipment.getInventoryNumber());
-
             if (inventoryChanged) {
                 List<Equipment> children = equipmentRepository.findByParentId(equipment.getId());
                 for (Equipment child : children) {
@@ -140,14 +137,11 @@ public class EquipmentService {
         if (invNum == null || invNum.isBlank()) {
             return;
         }
-
         Optional<Equipment> existingRootOpt = equipmentRepository
                 .findByInventoryNumberAndParentIsNull(invNum);
-
         if (existingRootOpt.isEmpty()) {
             return;
         }
-
         Equipment existingRoot = existingRootOpt.get();
 
         if (equipment.getId() != null && equipment.getId().equals(existingRoot.getId())) {
@@ -219,7 +213,6 @@ public class EquipmentService {
         syncService.sendEquipmentSync("UPDATE", List.of(toDto(child)));
     }
 
-
     @Transactional
     public void detachFromParent(Long childId) {
         Equipment child = equipmentRepository.findById(childId).orElseThrow();
@@ -258,7 +251,6 @@ public class EquipmentService {
     public List<String> getNextAvailableNumbers(int count) {
         String last = equipmentRepository.findLastInventoryNumber().orElse("ИТ00000");
         int lastNum = Integer.parseInt(last.substring(2));
-
         List<String> nextNumbers = new ArrayList<>();
         for (int i = 1; i <= count; i++) {
             nextNumbers.add(String.format("ИТ%05d", lastNum + i));
