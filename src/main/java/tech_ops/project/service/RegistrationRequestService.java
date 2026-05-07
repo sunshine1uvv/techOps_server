@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Transactional;
 import tech_ops.project.dto.RequestResponseDto;
 import tech_ops.project.dto.ReviewRequestDto;
 import tech_ops.project.entity.RegistrationRequest;
-import tech_ops.project.entity.RequestStatus;
+import tech_ops.project.enums.RequestStatus;
 import tech_ops.project.entity.User;
 import tech_ops.project.repository.RegistrationRequestRepository;
 import tech_ops.project.security.UserDetailsImpl;

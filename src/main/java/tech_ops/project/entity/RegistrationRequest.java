@@ -1,8 +1,10 @@
 package tech_ops.project.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
+import tech_ops.project.enums.RequestStatus;
+import tech_ops.project.enums.UserRole;
+
 import java.time.LocalDateTime;
 
 @Entity

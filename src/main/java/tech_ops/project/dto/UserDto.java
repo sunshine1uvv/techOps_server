@@ -2,8 +2,8 @@ package tech_ops.project.dto;
 
 
 import tech_ops.project.entity.User;
-import tech_ops.project.entity.UserRole;
-import tech_ops.project.entity.UserStatus;
+import tech_ops.project.enums.UserRole;
+import tech_ops.project.enums.UserStatus;
 
 import java.time.LocalDateTime;
 

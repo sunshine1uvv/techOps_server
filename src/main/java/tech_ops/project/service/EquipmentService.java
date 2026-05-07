@@ -2,17 +2,24 @@ package tech_ops.project.service;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import tech_ops.project.dto.EquipmentDto;
+import tech_ops.project.dto.OperatingHoursLogDto;
 import tech_ops.project.entity.Equipment;
 import tech_ops.project.entity.EquipmentType;
+import tech_ops.project.entity.OperatingHoursLog;
 import tech_ops.project.entity.User;
 import tech_ops.project.exceptions.InventoryConflictException;
+import tech_ops.project.mapper.EquipmentMapper;
+import tech_ops.project.mapper.OperatingHoursLogMapper;
 import tech_ops.project.repository.EquipmentRepository;
 import tech_ops.project.repository.EquipmentTypeRepository;
+import tech_ops.project.repository.OperatingHoursLogRepository;
 import tech_ops.project.repository.UserRepository;
+import tech_ops.project.security.UserDetailsImpl;
 import tech_ops.project.synchronization.WebSyncService;
 
 import java.util.*;
@@ -23,60 +30,40 @@ public class EquipmentService {
 
     private final EquipmentRepository equipmentRepository;
     private final EquipmentTypeRepository equipmentTypeRepository;
+    private final OperatingHoursLogRepository operatingHoursLogRepository;
     private final UserRepository userRepository;
     private final WebSyncService syncService;
+    private final EquipmentMapper equipmentMapper;
+    private final OperatingHoursLogMapper operatingHoursLogMapper;
 
     @Autowired
     public EquipmentService(EquipmentRepository equipmentRepository,
                             EquipmentTypeRepository equipmentTypeRepository,
+                            OperatingHoursLogRepository operatingHoursLogRepository,
                             UserRepository userRepository,
-                            WebSyncService syncService) {
+                            WebSyncService syncService,
+                            EquipmentMapper equipmentMapper,
+                            OperatingHoursLogMapper operatingHoursLogMapper) {
         this.equipmentRepository = equipmentRepository;
+        this.operatingHoursLogRepository = operatingHoursLogRepository;
         this.equipmentTypeRepository = equipmentTypeRepository;
         this.userRepository = userRepository;
         this.syncService = syncService;
+        this.equipmentMapper = equipmentMapper;
+        this.operatingHoursLogMapper = operatingHoursLogMapper;
     }
 
     // ------------------- Конвертация -------------------
 
-    private EquipmentDto toDto(Equipment equipment) {
-        return EquipmentDto.fromEquipment(equipment);
-    }
 
     private List<EquipmentDto> toDtoList(List<Equipment> equipments) {
-        return equipments.stream().map(this::toDto).collect(Collectors.toList());
+        return equipments.stream().map(equipmentMapper::toDto).collect(Collectors.toList());
     }
 
-    private Equipment toEntity(EquipmentDto dto) {
-        Equipment equipment = new Equipment();
-        equipment.setId(dto.getId());
-        if (dto.getParent() != null && dto.getParent().getId() != null) {
-            Equipment parent = equipmentRepository.findById(dto.getParent().getId())
-                    .orElseThrow(() -> new RuntimeException("Родительское оборудование не найдено"));
-            equipment.setParent(parent);
-        }
-
-        if (dto.getType() != null && dto.getType().getId() != null) {
-            EquipmentType type = equipmentTypeRepository.findById(dto.getType().getId())
-                    .orElseThrow(() -> new RuntimeException("Тип оборудования не найден"));
-            equipment.setType(type);
-        }
-        equipment.setName(dto.getName());
-        equipment.setInventoryNumber(dto.getInventoryNumber());
-        equipment.setSerialNumber(dto.getSerialNumber());
-        if (dto.getEmployee() != null && dto.getEmployee().getId() != null) {
-            User user = userRepository.findById(dto.getEmployee().getId())
-                    .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
-            equipment.setEmployee(user);
-        }
-        equipment.setLocation(dto.getLocation());
-        equipment.setCategory(dto.getCategory());
-        return equipment;
-    }
 
     @Transactional
     public List<EquipmentDto> findByUserId(Long userId) {
-       return toDtoList(equipmentRepository.findByEmployee_Id(userId));
+        return toDtoList(equipmentRepository.findByEmployee_Id(userId));
     }
 
     @Transactional
@@ -88,13 +75,13 @@ public class EquipmentService {
     public EquipmentDto findById(Long id) {
         Equipment equipment = equipmentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Оборудование не найдено"));
-        return toDto(equipment);
+        return equipmentMapper.toDto(equipment);
     }
 
     @Transactional
     public EquipmentDto save(EquipmentDto equipmentDto) {
         boolean isNew = (equipmentDto.getId() == null);
-        Equipment equipment = toEntity(equipmentDto);
+        Equipment equipment = equipmentMapper.toEntity(equipmentDto);
         Equipment existing = null;
 
         if (!isNew) {
@@ -124,12 +111,12 @@ public class EquipmentService {
         }
 
         Equipment saved = equipmentRepository.save(equipment);
-        affectedItems.add(toDto(saved));
+        affectedItems.add(equipmentMapper.toDto(saved));
 
         String action = isNew ? "CREATE" : "UPDATE";
         syncService.sendEquipmentSync(action, affectedItems);
 
-        return toDto(saved);
+        return equipmentMapper.toDto(saved);
     }
 
     private void validateInventoryNumberUniqueness(Equipment equipment) {
@@ -171,7 +158,7 @@ public class EquipmentService {
         }
         equipmentRepository.saveAll(children);
         equipmentRepository.delete(parent);
-        syncService.sendEquipmentSync("DELETE", List.of(toDto(parent)));
+        syncService.sendEquipmentSync("DELETE", List.of(equipmentMapper.toDto(parent)));
         if (!children.isEmpty()) {
             syncService.sendEquipmentSync("UPDATE", toDtoList(children));
         }
@@ -210,7 +197,7 @@ public class EquipmentService {
         child.setParent(parent);
         child.setInventoryNumber(parent.getInventoryNumber());
         equipmentRepository.save(child);
-        syncService.sendEquipmentSync("UPDATE", List.of(toDto(child)));
+        syncService.sendEquipmentSync("UPDATE", List.of(equipmentMapper.toDto(child)));
     }
 
     @Transactional
@@ -219,7 +206,7 @@ public class EquipmentService {
         child.setParent(null);
         child.setInventoryNumber(null);
         equipmentRepository.save(child);
-        syncService.sendEquipmentSync("UPDATE", List.of(toDto(child)));
+        syncService.sendEquipmentSync("UPDATE", List.of(equipmentMapper.toDto(child)));
     }
 
     @Transactional
@@ -231,7 +218,7 @@ public class EquipmentService {
             throw new RuntimeException("Конфликт данных: некоторые номера уже были заняты.");
         }
 
-        List<Equipment> entities = dtos.stream().map(this::toEntity).collect(Collectors.toList());
+        List<Equipment> entities = dtos.stream().map(equipmentMapper::toEntity).collect(Collectors.toList());
         List<Equipment> saved = equipmentRepository.saveAll(entities);
 
         TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -256,5 +243,74 @@ public class EquipmentService {
             nextNumbers.add(String.format("ИТ%05d", lastNum + i));
         }
         return nextNumbers;
+    }
+
+    @Transactional
+    public void addOperatingHours(OperatingHoursLogDto logDto) {
+        if (logDto.getHoursAdded() == null || logDto.getHoursAdded() <= 0) {
+            throw new IllegalArgumentException("Количество часов должно быть положительным числом");
+        }
+
+        Equipment equipment = equipmentRepository.findById(logDto.getEquipment().getId())
+                .orElseThrow(() -> new RuntimeException("Оборудование не найдено"));
+
+        User user = userRepository.findById(logDto.getUser().getId())
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        boolean isAdmin = user.getRole() != null &&
+                (user.getRole().name().equals("ADMIN") || user.getRole().name().equals("SUPERADMIN"));
+
+        boolean isOwner = equipment.getEmployee() != null &&
+                equipment.getEmployee().getId().equals(user.getId());
+
+        if (!isAdmin && !isOwner) {
+            throw new RuntimeException("У вас нет прав для добавления наработки этому оборудованию");
+        }
+
+        OperatingHoursLog log = operatingHoursLogMapper.toEntity(logDto);
+        operatingHoursLogRepository.save(log);
+
+        int hoursToAdd = log.getHoursAdded();
+        int current = equipment.getCurrentOperatingHours() == null ? 0 : equipment.getCurrentOperatingHours();
+        equipment.setCurrentOperatingHours(current + hoursToAdd);
+
+        equipmentRepository.save(equipment);
+        syncService.sendEquipmentSync("UPDATE",List.of(equipmentMapper.toDto(equipment)));
+    }
+
+    @Transactional
+    public void deleteOperatingHoursLog(Long logId) {
+        OperatingHoursLog log = operatingHoursLogRepository.findById(logId)
+                .orElseThrow(() -> new RuntimeException("Запись о наработке не найдена"));
+
+        UserDetailsImpl currentUserDetails = (UserDetailsImpl) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User currentUser = userRepository.findById(currentUserDetails.getId())
+                .orElseThrow(() -> new RuntimeException("Пользователь не найден"));
+
+        boolean isAdmin = currentUser.getRole().name().equals("ADMIN") || currentUser.getRole().name().equals("SUPERADMIN");
+        boolean isLogOwner = log.getUser() != null && log.getUser().getId().equals(currentUser.getId());
+        boolean isEquipmentOwner = log.getEquipment().getEmployee() != null && log.getEquipment().getEmployee().getId().equals(currentUser.getId());
+
+        if (!isAdmin && !isLogOwner && !isEquipmentOwner) {
+            throw new RuntimeException("У вас нет прав для удаления этой записи");
+        }
+
+        Equipment equipment = log.getEquipment();
+        int currentHours = equipment.getCurrentOperatingHours() == null ? 0 : equipment.getCurrentOperatingHours();
+        int newHours = Math.max(0, currentHours - log.getHoursAdded());
+        equipment.setCurrentOperatingHours(newHours);
+
+        equipmentRepository.save(equipment);
+        operatingHoursLogRepository.delete(log);
+
+        syncService.sendEquipmentSync("UPDATE", List.of(equipmentMapper.toDto(equipment)));
+    }
+
+    @Transactional
+    public List<OperatingHoursLogDto> getEquipmentHoursHistory(Long equipmentId) {
+        List<OperatingHoursLog> logs = operatingHoursLogRepository.findByEquipmentIdOrderByLogDateDesc(equipmentId);
+        return logs.stream()
+                .map(operatingHoursLogMapper::toDto)
+                .collect(Collectors.toList());
     }
 }

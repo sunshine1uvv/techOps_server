@@ -35,6 +35,24 @@ public class EquipmentDto {
     @Max(value = 5, message = "Максимальная категория — 5")
     private Integer category;
 
+    private DepartmentDto department;
+
+    private Integer currentOperatingHours;
+
+    private Integer maxOperatingHours;
+
+    public DepartmentDto getDepartment() {
+        return department;
+    }
+
+    public Integer getCurrentOperatingHours() {
+        return currentOperatingHours;
+    }
+
+    public Integer getMaxOperatingHours() {
+        return maxOperatingHours;
+    }
+
     public Long getId() {
         return id;
     }
@@ -107,35 +125,34 @@ public class EquipmentDto {
         this.category = category;
     }
 
+    public void setDepartment(DepartmentDto department) {
+        this.department = department;
+    }
+
+    public void setCurrentOperatingHours(Integer currentOperatingHours) {
+        this.currentOperatingHours = currentOperatingHours;
+    }
+
+    public void setMaxOperatingHours(Integer maxOperatingHours) {
+        this.maxOperatingHours = maxOperatingHours;
+    }
+
     @Override
     public String toString() {
-        return "Equipment{" +
+        return "EquipmentDto{" +
                 "id=" + id +
                 ", parent=" + parent +
                 ", type=" + type +
                 ", name='" + name + '\'' +
                 ", inventoryNumber='" + inventoryNumber + '\'' +
                 ", serialNumber='" + serialNumber + '\'' +
-                ", employee='" + employee + '\'' +
+                ", employee=" + employee +
                 ", location='" + location + '\'' +
                 ", category=" + category +
+                ", department=" + department +
+                ", currentOperatingHours=" + currentOperatingHours +
+                ", maxOperatingHours=" + maxOperatingHours +
                 '}';
     }
 
-    public static EquipmentDto fromEquipment(Equipment equipment) {
-        if (equipment == null) return null;
-        EquipmentDto dto = new EquipmentDto();
-        dto.setId(equipment.getId());
-        if (equipment.getParent() != null) {
-            dto.setParent(EquipmentDto.fromEquipment(equipment.getParent()));
-        }
-        dto.setType(equipment.getType());
-        dto.setName(equipment.getName());
-        dto.setInventoryNumber(equipment.getInventoryNumber());
-        dto.setSerialNumber(equipment.getSerialNumber());
-        dto.setEmployee(UserDto.fromUser(equipment.getEmployee()));
-        dto.setLocation(equipment.getLocation());
-        dto.setCategory(equipment.getCategory());
-        return dto;
-    }
 }

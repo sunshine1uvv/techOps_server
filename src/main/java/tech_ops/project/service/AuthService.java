@@ -11,8 +11,8 @@ import tech_ops.project.dto.JwtResponse;
 import tech_ops.project.dto.LoginRequest;
 import tech_ops.project.dto.RegistrationRequestDto;
 import tech_ops.project.entity.RegistrationRequest;
-import tech_ops.project.entity.RequestStatus;
-import tech_ops.project.entity.UserRole;
+import tech_ops.project.enums.RequestStatus;
+import tech_ops.project.enums.UserRole;
 import tech_ops.project.security.JwtUtils;
 import tech_ops.project.security.UserDetailsImpl;
 

@@ -1,13 +1,11 @@
 package tech_ops.project.security;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import org.jspecify.annotations.Nullable;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import tech_ops.project.entity.User;
-import tech_ops.project.entity.UserStatus;
+import tech_ops.project.enums.UserStatus;
 
 import java.util.Collection;
 import java.util.Collections;

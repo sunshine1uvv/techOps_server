@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import tech_ops.project.dto.EquipmentDto;
+import tech_ops.project.dto.OperatingHoursLogDto;
 import tech_ops.project.service.EquipmentService;
 
 import java.util.List;
@@ -24,6 +25,8 @@ public class EquipmentController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping
     public List<EquipmentDto> findAll() {
+        List<EquipmentDto> list = service.findAll();
+        System.out.println(list);
         return service.findAll();
     }
 
@@ -68,6 +71,26 @@ public class EquipmentController {
     @PostMapping("/detach")
     public void detachFromParent(@RequestParam("child_id") Long childId) {
         service.detachFromParent(childId);
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/hours")
+    public ResponseEntity<Void> addOperatingHours(@Valid @RequestBody OperatingHoursLogDto logDto) {
+        service.addOperatingHours(logDto);
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("isAuthenticated()")
+    @DeleteMapping("/hours/{logId}")
+    public ResponseEntity<Void> deleteOperatingHoursLog(@PathVariable Long logId) {
+        service.deleteOperatingHoursLog(logId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")
+    @GetMapping("/{id}/hours-history")
+    public ResponseEntity<List<OperatingHoursLogDto>> getHoursHistory(@PathVariable Long id) {
+        return ResponseEntity.ok(service.getEquipmentHoursHistory(id));
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPERADMIN')")

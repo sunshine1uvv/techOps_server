@@ -1,4 +1,4 @@
-package tech_ops.project.entity;
+package tech_ops.project.enums;
 
 public enum UserStatus {
     ACTIVE, BLOCKED

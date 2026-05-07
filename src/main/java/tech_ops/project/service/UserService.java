@@ -6,8 +6,8 @@ import org.springframework.stereotype.Service;
 import tech_ops.project.dto.UserDto;
 import tech_ops.project.entity.RegistrationRequest;
 import tech_ops.project.entity.User;
-import tech_ops.project.entity.UserRole;
-import tech_ops.project.entity.UserStatus;
+import tech_ops.project.enums.UserRole;
+import tech_ops.project.enums.UserStatus;
 import tech_ops.project.repository.UserRepository;
 import tech_ops.project.synchronization.WebSyncService;
 

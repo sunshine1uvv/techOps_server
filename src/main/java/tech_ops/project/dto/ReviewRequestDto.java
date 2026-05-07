@@ -1,8 +1,8 @@
 package tech_ops.project.dto;
 
 import jakarta.validation.constraints.NotNull;
-import tech_ops.project.entity.RequestStatus;
-import tech_ops.project.entity.UserRole;
+import tech_ops.project.enums.RequestStatus;
+import tech_ops.project.enums.UserRole;
 
 public class ReviewRequestDto {
     @NotNull

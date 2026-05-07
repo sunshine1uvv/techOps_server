@@ -4,9 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import tech_ops.project.dto.EquipmentDto;
 import tech_ops.project.dto.UserDto;
+import tech_ops.project.entity.Department;
 import tech_ops.project.entity.Equipment;
 import tech_ops.project.entity.EquipmentType;
 import tech_ops.project.entity.User;
+import tech_ops.project.repository.DepartmentRepository;
 import tech_ops.project.repository.EquipmentRepository;
 import tech_ops.project.repository.UserRepository;
 
@@ -17,15 +19,23 @@ public class EquipmentMapper {
 
     private final UserRepository userRepository;
 
+    private final DepartmentRepository departmentRepository;
+
     private final UserMapper userMapper;
+
+    private final DepartmentMapper departmentMapper;
 
     @Autowired
     public EquipmentMapper(EquipmentRepository equipmentRepository,
                            UserRepository userRepository,
-                           UserMapper userMapper) {
+                           DepartmentRepository departmentRepository,
+                           UserMapper userMapper,
+                           DepartmentMapper departmentMapper) {
         this.equipmentRepository = equipmentRepository;
         this.userRepository = userRepository;
+        this.departmentRepository = departmentRepository;
         this.userMapper = userMapper;
+        this.departmentMapper = departmentMapper;
     }
 
     public Equipment toEntity(EquipmentDto dto) {
@@ -64,6 +74,15 @@ public class EquipmentMapper {
         }
         equipment.setLocation(dto.getLocation());
         equipment.setCategory(dto.getCategory());
+
+        if (dto.getDepartment() != null && dto.getDepartment().getId() != null) {
+            Department department = departmentRepository.findById(dto.getDepartment().getId())
+                    .orElseThrow(() -> new RuntimeException("Подразделение не найдено"));
+            equipment.setDepartment(department);
+        }
+
+        equipment.setCurrentOperatingHours(dto.getCurrentOperatingHours());
+        equipment.setMaxOperatingHours(dto.getMaxOperatingHours());
         return equipment;
     }
 
@@ -81,6 +100,9 @@ public class EquipmentMapper {
         dto.setEmployee(userMapper.toDto(equipment.getEmployee()));
         dto.setLocation(equipment.getLocation());
         dto.setCategory(equipment.getCategory());
+        dto.setDepartment(departmentMapper.toDto(equipment.getDepartment()));
+        dto.setCurrentOperatingHours(equipment.getCurrentOperatingHours());
+        dto.setMaxOperatingHours(equipment.getMaxOperatingHours());
         return dto;
     }
 }

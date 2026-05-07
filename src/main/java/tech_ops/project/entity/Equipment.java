@@ -51,6 +51,28 @@ public class Equipment {
     @Column(name = "category", nullable = false)
     private Integer category;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "department_id")
+    private Department department;
+
+    @Column(name = "current_operating_hours")
+    private Integer currentOperatingHours = 0;
+
+    @Column(name = "max_operating_hours")
+    private Integer maxOperatingHours;
+
+    public Department getDepartment() {
+        return department;
+    }
+
+    public Integer getCurrentOperatingHours() {
+        return currentOperatingHours;
+    }
+
+    public Integer getMaxOperatingHours() {
+        return maxOperatingHours;
+    }
+
     public Long getId() {
         return id;
     }
@@ -123,6 +145,18 @@ public class Equipment {
         this.category = category;
     }
 
+    public void setDepartment(Department department) {
+        this.department = department;
+    }
+
+    public void setCurrentOperatingHours(Integer currentOperatingHours) {
+        this.currentOperatingHours = currentOperatingHours;
+    }
+
+    public void setMaxOperatingHours(Integer maxOperatingHours) {
+        this.maxOperatingHours = maxOperatingHours;
+    }
+
     @Override
     public String toString() {
         return "Equipment{" +
@@ -132,9 +166,12 @@ public class Equipment {
                 ", name='" + name + '\'' +
                 ", inventoryNumber='" + inventoryNumber + '\'' +
                 ", serialNumber='" + serialNumber + '\'' +
-                ", employee='" + employee + '\'' +
+                ", employee=" + employee +
                 ", location='" + location + '\'' +
                 ", category=" + category +
+                ", department=" + department +
+                ", currentOperatingHours=" + currentOperatingHours +
+                ", maxOperatingHours=" + maxOperatingHours +
                 '}';
     }
 }

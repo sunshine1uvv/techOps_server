@@ -7,7 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import tech_ops.project.dto.RequestResponseDto;
 import tech_ops.project.dto.ReviewRequestDto;
-import tech_ops.project.entity.RequestStatus;
+import tech_ops.project.enums.RequestStatus;
 import tech_ops.project.service.RegistrationRequestService;
 
 import java.util.List;
