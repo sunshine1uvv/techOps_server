@@ -73,12 +73,12 @@ public class EquipmentController {
         service.detachFromParent(childId);
     }
 
-    @PreAuthorize("isAuthenticated()")
-    @PostMapping("/hours")
-    public ResponseEntity<Void> addOperatingHours(@Valid @RequestBody OperatingHoursLogDto logDto) {
-        service.addOperatingHours(logDto);
-        return ResponseEntity.ok().build();
-    }
+        @PreAuthorize("isAuthenticated()")
+        @PostMapping("/hours")
+        public ResponseEntity<Void> addOperatingHours(@Valid @RequestBody OperatingHoursLogDto logDto) {
+            service.addOperatingHours(logDto);
+            return ResponseEntity.ok().build();
+        }
 
     @PreAuthorize("isAuthenticated()")
     @DeleteMapping("/hours/{logId}")

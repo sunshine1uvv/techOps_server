@@ -3,10 +3,9 @@ package tech_ops.project.synchronization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
-import tech_ops.project.dto.EquipmentDto;
-import tech_ops.project.dto.RequestResponseDto;
-import tech_ops.project.dto.UserDto;
+import tech_ops.project.dto.*;
 import tech_ops.project.entity.Equipment;
+import tech_ops.project.entity.EquipmentType;
 
 import java.util.List;
 
@@ -30,5 +29,13 @@ public class WebSyncService {
 
     public void sendEquipmentSync(String action, List<EquipmentDto> equipment) {
         messagingTemplate.convertAndSend("/topic/equipment-updates", new SyncMessage<>(action, equipment));
+    }
+
+    public void sendEquipmentTypeSync(String action, List<EquipmentTypeDto> equipmentType) {
+        messagingTemplate.convertAndSend("/topic/equipment-types", new SyncMessage<>(action, equipmentType));
+    }
+
+    public void sendDepartmentSync(String action, List<DepartmentDto> department) {
+        messagingTemplate.convertAndSend("/topic/departments", new SyncMessage<>(action, department));
     }
 }

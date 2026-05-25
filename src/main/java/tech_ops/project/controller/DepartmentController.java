@@ -2,9 +2,7 @@ package tech_ops.project.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import tech_ops.project.dto.DepartmentDto;
 import tech_ops.project.service.DepartmentService;
 
@@ -25,5 +23,18 @@ public class DepartmentController {
     @GetMapping
     public List<DepartmentDto> getAllDepartments() {
         return departmentService.getAllDepartments();
+    }
+
+    @PreAuthorize("hasAnyRole('SUPERADMIN')")
+    @PostMapping
+    public DepartmentDto save(@RequestBody DepartmentDto dto) {
+        System.out.println(dto);
+        return departmentService.save(dto);
+    }
+
+    @PreAuthorize("hasAnyRole('SUPERADMIN')")
+    @DeleteMapping("/{id}")
+    public void deleteById(@PathVariable Long id) {
+        departmentService.deleteById(id);
     }
 }
