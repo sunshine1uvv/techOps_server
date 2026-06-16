@@ -2,12 +2,14 @@ package tech_ops.project.service;
 
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import tech_ops.project.dto.UserDto;
 import tech_ops.project.entity.RegistrationRequest;
 import tech_ops.project.entity.User;
 import tech_ops.project.enums.UserRole;
 import tech_ops.project.enums.UserStatus;
+import tech_ops.project.repository.RegistrationRequestRepository;
 import tech_ops.project.repository.UserRepository;
 import tech_ops.project.synchronization.WebSyncService;
 
@@ -18,13 +20,15 @@ import java.util.stream.Collectors;
 public class UserService {
 
     private final UserRepository repository;
+    private final RegistrationRequestService requestService;
     private final WebSyncService syncService;
 
 
     @Autowired
-    public UserService(UserRepository repository, WebSyncService syncService) {
+    public UserService(UserRepository repository, WebSyncService syncService, @Lazy RegistrationRequestService requestService) {
         this.repository = repository;
         this.syncService = syncService;
+        this.requestService = requestService;
     }
 
     @Transactional
@@ -66,6 +70,9 @@ public class UserService {
     @Transactional
     public void deleteUserById(Long userId) {
         User user = repository.findById(userId).orElseThrow();
+        try {
+            requestService.deleteByUsername(user.getUsername());
+        } catch (Exception ignored){}
         repository.delete(user);
         syncService.sendUserSync("DELETE", List.of(UserDto.fromUser(user)));
     }

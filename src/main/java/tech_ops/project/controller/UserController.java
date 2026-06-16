@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import tech_ops.project.dto.UserDto;
 import tech_ops.project.enums.UserRole;
 import tech_ops.project.enums.UserStatus;
+import tech_ops.project.repository.RegistrationRequestRepository;
 import tech_ops.project.service.UserService;
 
 import java.util.List;
